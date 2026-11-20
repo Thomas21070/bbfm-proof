@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>整数分拆子和多项式倒数和的分母对数凹性</title>
+<style>
+body{max-width:45em;margin:3em auto;padding:0 1.4em;color:#192827;font:17px/1.78 Cambria,"Microsoft YaHei","SimSun",serif}
+h1,h2,h3{line-height:1.4}h1{font-size:1.8em}h2{margin-top:1.6em;font-size:1.28em}h3{font-size:1.06em}
+.eq{text-align:center;font-family:"Cambria Math",Cambria,"SimSun",serif;margin:.85em 0}
+.statement{border-left:3px solid #51726b;padding-left:1em}sub,sup{font-size:.73em;line-height:0}
+p{margin:.65em 0}a{color:#205c60}table{margin:1em auto;border-collapse:collapse}th,td{text-align:left;padding:.2em .8em;border-bottom:1px solid #c7d1d0}code,pre{font-family:Consolas,monospace;font-size:.93em}pre{padding:.8em;background:#f1f4f3}
+@page{size:A4;margin:19mm 18mm 20mm} @media print{body{max-width:none;margin:0;padding:0;font:10.5pt/1.54 Cambria,"SimSun",serif}h2,h3{break-after:avoid}p{orphans:2;widows:2}.eq,table,pre{break-inside:avoid}section+section{break-before:page}}
+</style></head><body><article>
+<section><h1>整数分拆子和多项式倒数和的分母对数凹性</h1>
+<p><b>摘要</b>　给定正整数 n，将其各分拆的子和多项式的倒数相加。Ballantine、Beck、Feigon 与 Maurischat 猜想，这个有理函数的分母的系数序列恰在 n=3,5,6,7 时不对数凹。本文给出一个计算机辅助证明。靠近端点的系数由截断乘积的卷积归纳处理。其余系数用指数倾斜移到概率分布的均值，在傅里叶反演中保留二阶差分。把权重、倾斜参数和重数同时归一化后，无界参数可由有限个区间覆盖。三个仅依赖 Python 标准库的程序给出全部有限检验。</p>
+<h2>1　命题与证明结构</h2>
+<p>对分拆 λ，子和多项式为 ∏<sub>j∈λ</sub>(1+x<sup>j</sup>)，每个部件按重数计。由 [1，命题 3.8]，对 λ 的倒数求和所得的分母可写成</p>
+<p class="eq">D<sub>n</sub>(x) = ∏<sub>1≤j≤n</sub>(1+x<sup>j</sup>)<sup>rⱼ</sup> = ∑<sub>k=0</sub><sup>d</sup> a<sub>k</sub>x<sup>k</sup>，　r<sub>j</sub> = 1+⌊log₂(n/j)⌋。</p>
+<p>本文用 d 表示次数，必要时写 r<sub>j</sub>(n) 区分不同参数，并约定 j&gt;n 时 r<sub>j</sub>=0。文献 [2] 证明相应的分子与分母互素；分母系数的对数凹性是 [1，第 4 猜想]。</p>
+<p class="statement"><b>定理.</b> 对正整数 n，系数序列 (a₀,…,a<sub>d</sub>) 满足每个内部位置的不等式 a<sub>k</sub>²≥a<sub>k−1</sub>a<sub>k+1</sub>，当且仅当 n∉{3,5,6,7}。</p>
+<p>每个因子都是回文多项式，所以只需考虑 1≤k≤d/2。各系数均为正：各取一份权重 1 至 n 已能实现从 0 到 n(n+1)/2 的全部子和，加入其余每个权重时两支整数区间仍然相接。</p>
+<p>第 2 节处理 n≤1024 和 k≤4096。较大的 n、k 由均值确定唯一的倾斜参数 t。第 3 节给出傅里叶判据，第 4 节处理 nt≤2 和 t≥2。第 5、6 节证明剩余的连续参数区间有有限算术证书，且证书中的每次接受都蕴含严格对数凹。第 7 节给出复算方法。</p></section>
+<section><h2>2　整数核验与端部归纳</h2>
+<p>在 D<sub>n−1</sub> 的基础上，恰在 n/j 为 2 的非负整数次幂时补上一个因子 1+x<sup>j</sup>，即可得到 D<sub>n</sub>。从 D₀=1 开始，倒序更新系数，以整数乘法比较相邻三项。对 1≤n≤1024，利用回文性共检查 119,653,461 个位置，仅有下表中的 n 出现负差额。表中记录最靠左的证据。</p>
+<table><tr><th>n</th><th>k</th><th>(a<sub>k−1</sub>,a<sub>k</sub>,a<sub>k+1</sub>)</th></tr><tr><td>3</td><td>2</td><td>(2,2,3)</td></tr><tr><td>5</td><td>5</td><td>(11,14,18)</td></tr><tr><td>6</td><td>2</td><td>(3,5,9)</td></tr><tr><td>7</td><td>2</td><td>(3,5,9)</td></tr></table>
+<p>为控制任意 n 的端部，取 M=4097，F(x)=∏<sub>j≤M, j≥1</sub>(1+x<sup>j</sup>)。若 n≥16M 且 b=⌊n/16⌋，则对 j≤M，r<sub>j</sub>(n)=4+r<sub>j</sub>(b)：计数 2<sup>v</sup>j≤n 的整数 v≥0，前四个总能取到，其余与 2<sup>v−4</sup>j≤b 一一对应。故</p>
+<p class="eq">D<sub>n</sub>(x) ≡ D<sub>b</sub>(x) F(x)⁴　(mod x<sup>M+1</sup>)。</p>
+<p>有限、非负、正支撑为区间的两个对数凹序列卷积后仍对数凹。事实上，将序列 u 补零，写 T(u)<sub>ij</sub>=u<sub>j−i</sub>。相邻系数比值的单调性给出全部二阶子式非负，涉及支撑边界时结论由补零保持。由于 T(u∗v)=T(u)T(v)，二阶 Cauchy–Binet 公式给出卷积所需的不等式。截断到初始一段也保持这些性质。</p>
+<p>程序对 F⁴ 和 8≤n&lt;16M 的 D<sub>n</sub> 分别检查次数 0 至 M 的截断序列。没有内部空位，检查均通过。依上述同余式，对 n 作强归纳；右边 b≥M，所以归纳不会调用四个例外。这样，任意 n≥8、1≤k≤4096 的内部位置都满足所需不等式。</p>
+<p>以下固定 n≥1025、4096&lt;k≤d/2。有限核验是证明的一部分，本节两项检查的程序与参数见第 7 节。</p></section>
+<section><h2>3　均值处的差分判据</h2>
+<p>取独立伯努利变量，每个权重 j 有 r<sub>j</sub> 份，成功概率为 p<sub>j</sub>=(1+exp(tj))<sup>−1</sup>。令 S 为它们的加权和，v<sub>j</sub>=p<sub>j</sub>(1−p<sub>j</sub>)，σ²=∑r<sub>j</sub>j²v<sub>j</sub>。均值从 t=0 处的 d/2 连续下降至 0，导数为 −σ²，所以唯一 t≥0 使 E S=k。令 P<sub>s</sub>=Pr(S=k+s)，于是 P<sub>s</sub>=a<sub>k+s</sub>e<sup>−t(k+s)</sup>/D<sub>n</sub>(e<sup>−t</sup>)。因此 2P₀&gt;P₋₁+P₁ 蕴含 a<sub>k</sub>²&gt;a<sub>k−1</sub>a<sub>k+1</sub>。</p>
+<p>令 φ(θ)=E exp(iθ(S−k))。因为 k 是整数，傅里叶反演并作代换 u=σθ 后，所求二阶差分的符号等于</p>
+<p class="eq">∫<sub>−πσ</sub><sup>πσ</sup> 2σ²(1−cos(u/σ)) Re φ(u/σ) du。　(1)</p>
+<p>有两个基本估计。首先，|φ(θ)|≤exp(−∑r<sub>j</sub>v<sub>j</sub>(1−cos(jθ)))，这是逐项应用 |1−p+pe<sup>iy</sup>|²=1−2p(1−p)(1−cos y) 的结果。其次，设 g(y)=log(1−p+pe<sup>iy</sup>)，在从 0 开始的无零线段上连续取值，则</p>
+<p class="eq">g′(0)=ip，　g″(0)=−p(1−p)，　|g‴(y)|≤p(1−p)/|1−p+pe<sup>iy</sup>|³。</p>
+<p>最后一式由微分及 |1−p−pe<sup>iy</sup>|≤1 得到。分母的底数至少为 |cos(y/2)|，也至少为 1−2p。中心化去掉一次项，二次项为实数。因此，如果在 |u|≤A 的泰勒线段上各项均有 |g‴|≤C v<sub>j</sub>，则 φ 的连续辐角绝对值至多 C A³∑r<sub>j</sub>j³v<sub>j</sub>/(6σ³)。该值小于 π/2 时，整个区间的实部均非负。</p>
+<p>还可对任意 u 使用 Re φ(u/σ)≥1−u²/2，这是 cos z≥1−z²/2 与中心化方差公式的推论。如果 σ≥3、A≥1.4，在 |u|≤1.4 上乘子至少为 0.98u²，故主区间对 (1) 的贡献至少为</p>
+<p class="eq">2·0.98∫<sub>0</sub><sup>1.4</sup> u²(1−u²/2) du &gt; 0.71。</p>
+<p>这里及下文，主区间均位于积分范围内。估计尾部时乘子至多为 u²，亦至多为 4σ²。将 |φ|≤exp(−Bu²) 的两侧尾部从 |u|=a 积起，其绝对贡献不超过</p>
+<p class="eq">G(a,B) = (a/B + 1/(2B²a)) exp(−Ba²)，　B&gt;0。　(2)</p>
+<p>式 (2) 由一次分部积分和 ∫<sub>a</sub><sup>∞</sup>exp(−Bu²)du≤exp(−Ba²)/(2Ba) 得到。</p></section>
+<section><h2>4　两种极端倾斜</h2>
+<p><b>nt≤2.</b> 此时 v<sub>j</sub>≥1/10，故 σ²≥n³/30。又 ∑r<sub>j</sub>=∑<sub>v≥0</sub>⌊n/2<sup>v</sup>⌋≤2n，故 σ²≤n³。在 n≥768 时 n/σ&lt;0.198。在 |u|≤3.3 有 |ju/σ|&lt;0.66，三阶导数界可取 C=1.2，辐角至多 1.2·3.3³·0.198/6&lt;π/2。</p>
+<p>在 3.3≤|u|≤σ/n，利用 |jθ|≤1 及 sin²(jθ/2)≥0.9(jθ/2)²，有 |φ|≤exp(−0.45u²)。在 σ/n≤|u|≤πσ/n，用 |jθ|≤π 得 |φ|≤exp(−2u²/π²)。由 (2) 两区间的贡献绝对值分别小于 0.061 与 0.154，其中 σ/n≥√(768/30)。</p>
+<p>在 π/n≤|θ|≤π，有 ∑<sub>j≤n</sub>sin²(jθ/2)≥n/3。为证此式，可设 θ&gt;0。在 π/n≤θ≤2π/(n+1)，余弦和 ∑cos(jθ)=sin(nθ/2)cos((n+1)θ/2)/sin(θ/2)≤0。在 2π/(n+1)≤θ≤π，几何和的模至多 1/sin(π/(n+1))≤n/3（n≥768，用 sin z≥z−z³/6）。因此 |φ|≤exp(−n/15)，剩余积分绝对值至多 8πn<sup>9/2</sup>exp(−n/15)&lt;0.001。三个尾界之和小于 0.71。</p>
+<p><b>t≥2.</b> 写 H₀=r₁e<sup>−t</sup>，M<sub>s</sub>=∑r<sub>j</sub>j<sup>s</sup>v<sub>j</sub>。由 r<sub>j</sub>≤r₁、p<sub>j</sub>≤e<sup>−tj</sup> 及几何级数 ∑<sub>j≥1</sub>j<sup>s</sup>e<sup>−2(j−1)</sup>，对 s=1,2,3,4 分别得到 k≤1.34H₀，σ²≤1.76H₀，M₃≤2.8H₀，M₄≤5.6H₀。另外 σ²≥r₁v₁≥0.77H₀，而 k&gt;4096 给出 H₀&gt;3056。因 1−2p≥(1−e<sup>−2</sup>)/(1+e<sup>−2</sup>)&gt;0.76，可取 C=2.28。在 |u|≤3.3 辐角上界为 2.28·2.8·3.3³/(6·0.77<sup>3/2</sup>√3056)&lt;1.03。</p>
+<p>在 3.3≤|u|≤12，用 1−cos y≥y²/2−y⁴/24 得 |φ|≤exp(−u²/2+M₄u⁴/(24σ⁴))≤exp(−0.45u²)。在 12≤|u|≤πσ，仅权重 1 的各项就给出 |φ|≤exp(−0.085u²)，因为 2r₁v₁/(π²σ²)&gt;0.085。相应两段的尾界由 (2) 分别小于 0.061 与 0.001。故两种极端倾斜均已处理。</p></section>
+<section><h2>5　把无界参数归入有限区间</h2>
+<p>余下 nt≥2、0&lt;t≤2。取非负次幂 D=2<sup>b</sup> 使 1≤τ=tD≤2，故 n≥D。令 H=⌊log₂(n/D)⌋，α=n/(D2<sup>H</sup>)∈[1,2)，R=H+1，I=DR。写 x=j/D，定义</p>
+<p class="eq">μ<sub>s</sub> = I<sup>−1</sup>∑r<sub>j</sub>v<sub>j</sub>x<sup>s</sup>，　η = I<sup>−1</sup>∑r<sub>j</sub>p<sub>j</sub>x，　σ²=D²Iμ₂，　k=DIη。</p>
+<p>程序分别保留 D=1,2,…,256 中的各个二次幂，所有 D≥512 合成一类；H=0,…,12 分别保留，所有 H≥13 合成一类。写 D₀=min(D,512)，h=min(H,13)。将 α、τ 的单位区间各四等分，得到 10·14·4·4=2240 个初始区间。对 α 总取左闭右开，τ 的上端点亦可纳入。未立即通过的区间在 α、τ 两个方向同时二等分。</p>
+<p><b>矩的上下界.</b> 对 D≤256 取 m=D，每个格点 x=i/m 单独计数。对 D≥512 取 m=128，第 i 格为 ((i−1)/m,i/m]，精确包含 D/m 个权重。两种情况下都记格的左右界为 x₋、x₊（单点时相等）。若 α∈[l,r)，则由</p>
+<p class="eq">r<sub>j</sub>/R = max(0, 1+⌊log₂(α/x)⌋/R)</p>
+<p>可将 α、x 分别替换成 l、x₊ 或 r、x₋，得到重数上下界。当 H≥13 时，仿射变量 1/R 的范围为 (0,1/14]，两端取极值即可。若首格左端为零，其平均重数用上界 1+(⌊log₂(rm)⌋+3)/R。事实上，令 s=D/m，则 s<sup>−1</sup>∑<sub>j≤s</sub>log₂(s/j)≤log₂e，由对数的积分比较可得。此格的全部位置均不超过 n。</p>
+<p>p 和 v 均随 τx 递减，将各自端点值乘重数界，记所得的 r<sub>j</sub>v<sub>j</sub>/R 格下界为 c₋（零左端格的上界按格平均理解）。对 μ₂、μ₃、μ₄ 和 η，逐格用 x₋、x₊ 求界后除以 m。只枚举 x≤32；每个上界另加 10<sup>−6</sup>。这是因为 x&gt;32 时 r<sub>j</sub>≤R、p<sub>j</sub>≤e<sup>−x</sup>，按 a&lt;x≤a+1 分段，遗漏项至多 ∑<sub>a≥32</sub>(a+1)⁴e<sup>−a</sup>&lt;10<sup>−6</sup>（相邻项比值小于 1/2）。以下把所得界记作 v₋≤μ₂≤v₊，μ₃≤m₃，μ₄≤m₄，η≤η₊。</p>
+<p>取 I₀=D₀(h+1) 为 I 的下界；若 D 已固定，可由 k&gt;4096 提高为 max(I₀,4096/(Dη₊))。若 I、D 均固定且 DIη₊≤4096，则整个区间已在端部范围。n&lt;1025 或 nt&lt;2 也可在此处由端点界直接排除。令 s₀≤√(I₀v₋) 为有理下界，则 σ≥D₀s₀。验证器仅在 D₀s₀≥3 时使用第 3 节的主积分下界。</p></section>
+<section><h2>6　傅里叶区间的接受条件</h2>
+<p><b>主区间.</b> 试取 A∈{3.1,2.9,2.7,2.5}、z∈{2,2.5,3,3.5,4,4.5}。记 τ 的下端点为 τ₀，令 Y=Az/(τ₀s₀)。在 tj≤z 的各权重，|u|≤A 意味着 |ju/σ|≤Y；若 Y&lt;2，分母底数至少为 1−Y²/8。在 tj&gt;z 的权重，底数至少为 (1−e<sup>−z</sup>)/(1+e<sup>−z</sup>)。取这两个下界的倒数立方中的较大者 C。若 A³Cm₃/(6s₀v₋)&lt;1.56，则辐角绝对值小于 π/2，主积分大于 0.71。</p>
+<p><b>中低频.</b> 写 w=D|θ|，故 |u|=w√(Iμ₂)。在 w≤W，可用 |φ|≤exp(−B(W)u²)，其中 B(W) 取以下可用下界中的最大者：</p>
+<p class="eq">1/2−W²m₄/(24v₋)，　(2v₊m)<sup>−1</sup> ∑<sub>格</sub> c₋ x₋² max(0,1−W²x₊²/12)。</p>
+<p>二者均由第 3 节的模估计及 1−cos y≥max(0,y²/2−y⁴/24) 得到。若 D 固定，权重 1 还提供下界 2c₋/(π²mD²v₊)，其中 c₋ 取第一格，且仅要求 |θ|≤π。验证器把分母中的 π 换成其上界 22/7。</p>
+<p><b>远离零的频率.</b> 对 w≥W&gt;0 另有 |φ|≤exp(−I C(W))。这里 C(W) 是对满足 x₋&gt;(22/7)/(2W)+1/D₀ 的格求 c₋/m 的和。证明如下。权重序列 b<sub>j</sub>=r<sub>j</sub>v<sub>j</sub> 递减，支撑有限。在 0&lt;|θ|≤π，长度 L 的余弦部分和至多 1/(2sin(|θ|/2))≤π/(2|θ|)，这由 Dirichlet 核公式得到。令 J=⌈π/(2|θ|)⌉，由分部求和，</p>
+<p class="eq">∑ b<sub>j</sub>(1−cos(jθ)) ≥ ∑<sub>L≥1</sub>(b<sub>L</sub>−b<sub>L+1</sub>) max(0,L−J) = ∑<sub>j&gt;J</sub>b<sub>j</sub>。</p>
+<p>上述格条件保证格内每个 j&gt;J。这给出了同时适用于所有较高频率的模上界。</p>
+<p><b>求和规则.</b> 频率切点依次取 1/4, 1/2, 3/4, 1, 3/2, 2, 3, 4, 6, 8，止于 min(8,(22/7)D₀)，必要时添加该端点。在一个选定切点 W 以前，主区间之外的总贡献至多 G(A,B(W))。在每个后续频带 [L,W] 中，仅考虑 |u|≥A，其贡献绝对值至多为下列两个可用界中的较小者：</p>
+<p class="eq">G(max(A,Ls₀),B(W))，　(2/3)W³v₊<sup>3/2</sup> sup<sub>I≥I₀</sub> I<sup>3/2</sup>exp(−I C(L))。</p>
+<p>后式是把 u² 积至 W√(Iμ₂) 的结果。非正的衰减率不参与估计。若 8 之后仍有积分区间，则用乘子界 4σ² 和区间长度 2πσ，得上界 8πD³v₊<sup>3/2</sup>I<sup>3/2</sup>exp(−I C(8))。若 D 已合并，用 D≤I/(h+1) 消去 D，再对 I≥I₀ 取上确界。函数 I<sup>p</sup>exp(−cI) 在该范围的最大值取于 max(I₀,p/c)。</p>
+<p>只要某组 A,z、切点的尾界上界之和小于 0.71，该区间上 (1) 严格为正。这些取值仅提供不同的充分条件；每次判定都对整块内的参数同时成立。</p></section>
+<section><h2>7　算术证书与结论</h2>
+<p>验证器用整数和有理数实现上述上下界。指数函数的定点单位是 U=2⁸⁰。对 a≥80 直接使用 0≤Ue<sup>−a</sup>≤1；否则将 a 不断折半至 z≤1/8。对 e<sup>−z</sup> 的交错级数分别截取到第 9 次和第 10 次得到下、上界，计算每一项时向外取整，再逐次平方、向外取整以恢复 e<sup>−a</sup>。对 e=e<sup>−τx</sup>∈[0,1]，p=e/(1+e)、v=e/(1+e)² 均递增，所以可直接传递端点。平方根以整数平方根向下或向上包围。区间判定没有使用浮点运算、近似根或随机抽样。</p>
+<p>以下三条命令分别检查有限参数、端部归纳的前提，以及第 5、6 节的覆盖。均在本稿同目录运行。</p>
+<pre>python check_denominator.py 1024
+python check_edge.py 4096
+python verify_transition.py --witnesses boxes.csv</pre>
+<table><tr><th>第三项核验的终端区间类别</th><th>数目</th></tr>
+<tr><td>由 n≤1024 排除</td><td>864</td></tr><tr><td>由 k≤4096 排除</td><td>483</td></tr><tr><td>由 nt&lt;2 排除</td><td>3</td></tr><tr><td>主积分超过尾积分</td><td>998</td></tr><tr><td>合计</td><td>2348</td></tr></table>
+<p>每次细分用四个子块替换一个父块。运行中共发生 36 次细分，故 2240+3·36=2348，与终端统计一致。程序在任何未覆盖的块上都会继续细分或报错。对 D≥512 及 H≥13 的合并类别，第 5 节推导使用的是对所有较大参数均成立的界，因此没有截去无穷尾部。</p>
+<p>现取任意 n≥1 及其任一内部位置。四个例外的失败见第 2 节。对其余 n，由回文性取 k≤d/2，第 2 节排除有限参数及端部。第 4 节处理两端倾斜，剩余者属于第 5 节的参数覆盖，由第 6 节和本节算术证书得严格不等式。各情形合并即为定理。□</p>
+<h3>参考文献</h3>
+<p>[1] C. Ballantine, G. Beck, B. Feigon and K. Maurischat. Reciprocals of subsum polynomials. <i>The Ramanujan Journal</i> (2026). <a href="https://doi.org/10.1007/s11139-026-01419-0">期刊原文</a>。</p>
+<p>[2] E. Chen, K. Ono and J. Zhang. Reciprocals of Partition Polynomials (2026). 见第 1.2 节、表 1 及定理 1。<a href="https://arxiv.org/abs/2605.21718">arXiv:2605.21718</a>。</p>
+<p><a href="check_denominator.py">全系数核验程序</a> · <a href="check_edge.py">端部核验程序</a> · <a href="verify_transition.py">过渡区域有理数验证器</a> · <a href="boxes.csv">逐区间证书</a>。证书列出端点及所选 A、z、W，最后两列分别是辐角与尾积分的上界，均以百万分之一为单位向上取整。</p>
+</section></article></body></html>
